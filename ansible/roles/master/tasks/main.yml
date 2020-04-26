@@ -1,0 +1,41 @@
+---
+
+- name: Download Fedora CoreOS Qcow2 image as xz archive
+  get_url:
+    url: 'https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ fcos_version }}/{{ fcos_arch }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
+    dest: '/usr/src/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
+    checksum: '{{ fcos_checksum }}'
+
+- name: Extract XZ archive of Fedora CoreOS Qcow2 image
+  unarchive:
+    src: '/usr/src/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
+    dest: '/var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
+    remote_src: yes
+
+- name: Create VM disk image
+  command: |
+    qemu-img create -f qcow2 \
+      -b /var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2 \
+      /var/lib/libvirt/images/k8s-{{ vmname }}.qcow2
+  args:
+    creates: '/var/lib/libvirt/images/k8s-{{ vmname }}.qcow2'
+
+- name: Define Ignite FCC
+  template:
+    src: templates/ignite.yaml.j2
+    dest: /usr/src/k8s-{{ vmname }}.fcc
+  register: fcc_changed
+
+- name: Compile ignite file
+  shell: |
+    podman run -i --rm quay.io/coreos/fcct:release \
+      --pretty --strict < /usr/src/k8s-{{ vmname }}.fcc \
+      > /usr/src/k8s-{{ vmname }}.ign
+  when: fcc_changed
+
+- name: Define Master libvirt VM
+  virt:
+    name: '{{ vmname }}'
+    state: running
+    command: define
+    xml: "{{ lookup('templates', 'vm.xml.j2') }}"

@@ -1,0 +1,3 @@
+all:
+  hosts:
+    local ansible_connection=local ansible_become=true

@@ -1,0 +1,47 @@
+variant: fcos
+version: 1.0.0
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC7kJ1iZMTIg95C1+/+DJvlxDhWNR+8TpGcvIoW2p/bSZ9DizDukY6RB6+5EPEekR6YJkAzIyfgXK5AisX4av+SEiPhW+PKY6I4pPAZ6jjnbWOLtTCDAmhdC8qkC+LyTwLDQKsDdJuu/fHdsZts2tCma3zvsrB/rkUruj34qiIYuKqPM5uCCJ68l4PSkrHLjPcGPYL+VbR2egmChEbStr2U8UoRry9BWj0D0Ggxi/qxM6HWylYtHCqgwhPOcTl5k7M7h+YSrbyCn3NG+lJYGhlQrrlgskXm+ruJuF4/mJ5vDMpEOin4K+MvcaT9KohRjCr1KzZVBldSG7AZtb48Xvtb+uFjW8OqQt0IWvTb5w2cPFHvyxLiQ/WFfvTNlTPXy6fkOYMSLQfBYJ9DLXVTn+G4raz+lyZJ1xPKOanD1DiwFdhwWARuFIM3vQpoeYiA/yilUX/lB7qYS2ifrtLFUqWCUtuBIH2UI7Hy2ESawNmijudHSkHEY2e4kE6sI6Qno9vvQUjDT6XLJZfApZYR23Ww2p7NA5ZXyD0cCAbJ3vkHomnXpP9r9H5TXFL3GA5yk/ibrW9bgcBqktoNN8D9t2l8xCo1/3HZd1sWCwHvZf44gtiMzlcszW90hRwWMMgorg6GXZXSi1ESS6OSd7aqxPrqz4qc6e9ZctyU/7+b4EFFdw== ksuszyns@thinkpad-t590
+storage:        
+  files:
+    - path: /etc/yum.repos.d/kubernetes.repo
+      mode: 0644
+      contents:
+        inline: |
+          [kubernetes]
+          name=Kubernetes
+          baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+          enabled=1
+          gpgcheck=1
+          repo_gpgcheck=1
+          gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    - path: /var/lib/k8s/ensure-installed.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env bash
+
+          set -Eeuo pipefail
+
+          if ! rpm -q kubeadm kubelet kubectl >/dev/null 2>&1; then
+            rpm-ostree install kubeadm kubelet kubectl
+            reboot
+          fi
+systemd:
+  units:
+    - name: manage-configuration.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Manage OS configuration
+        After=network-online.target
+        Wants=network-online.target
+
+        [Service]
+        ExecStart=/var/lib/k8s/ensure-installed.sh
+
+        [Install]
+        WantedBy=multi-user.target
