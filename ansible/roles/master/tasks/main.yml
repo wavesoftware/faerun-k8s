@@ -1,41 +1,53 @@
 ---
 
+- name: Check if Fedora CoreOS Qcow2 image exists
+  stat:
+    path: '/var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
+  register: fcos_image
+  changed_when: False
+
 - name: Download Fedora CoreOS Qcow2 image as xz archive
   get_url:
     url: 'https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ fcos_version }}/{{ fcos_arch }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
-    dest: '/usr/src/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
+    dest: '/var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
     checksum: '{{ fcos_checksum }}'
+  when: not fcos_image.stat.exists
 
 - name: Extract XZ archive of Fedora CoreOS Qcow2 image
-  unarchive:
-    src: '/usr/src/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
-    dest: '/var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
-    remote_src: yes
+  command: |
+    unxz fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz
+  args:
+    chdir: /var/lib/libvirt/images
+    creates: '/var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
 
 - name: Create VM disk image
   command: |
     qemu-img create -f qcow2 \
       -b /var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2 \
-      /var/lib/libvirt/images/k8s-{{ vmname }}.qcow2
+      /var/lib/libvirt/images/{{ vmname }}.qcow2
   args:
-    creates: '/var/lib/libvirt/images/k8s-{{ vmname }}.qcow2'
+    creates: '/var/lib/libvirt/images/{{ vmname }}.qcow2'
 
 - name: Define Ignite FCC
   template:
     src: templates/ignite.yaml.j2
-    dest: /usr/src/k8s-{{ vmname }}.fcc
-  register: fcc_changed
+    dest: /usr/src/{{ vmname }}.fcc
+  register: ignite_fcc
 
 - name: Compile ignite file
   shell: |
     podman run -i --rm quay.io/coreos/fcct:release \
-      --pretty --strict < /usr/src/k8s-{{ vmname }}.fcc \
-      > /usr/src/k8s-{{ vmname }}.ign
-  when: fcc_changed
+      --pretty --strict < /usr/src/{{ vmname }}.fcc \
+      > /usr/src/{{ vmname }}.ign
+  when: ignite_fcc.changed
 
 - name: Define Master libvirt VM
   virt:
+    command: define
+    xml: "{{ lookup('template', 'vm.xml.j2') }}"
+    autostart: yes
+
+- name: Ensure master VM is running
+  virt:
     name: '{{ vmname }}'
     state: running
-    command: define
-    xml: "{{ lookup('templates', 'vm.xml.j2') }}"
