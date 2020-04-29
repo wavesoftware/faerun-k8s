@@ -1,15 +1,24 @@
 ---
 
+- name: Set images home fact
+  set_fact:
+    images_dir: /var/lib/libvirt/images
+
+- name: Ensure user's libvirt directory exists
+  file:
+    path: '{{ images_dir }}'
+    state: directory
+
 - name: Check if Fedora CoreOS Qcow2 image exists
   stat:
-    path: '/var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
+    path: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
   register: fcos_image
   changed_when: False
 
 - name: Download Fedora CoreOS Qcow2 image as xz archive
   get_url:
     url: 'https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ fcos_version }}/{{ fcos_arch }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
-    dest: '/var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
+    dest: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
     checksum: '{{ fcos_checksum }}'
   when: not fcos_image.stat.exists
 
@@ -17,28 +26,28 @@
   command: |
     unxz fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz
   args:
-    chdir: /var/lib/libvirt/images
-    creates: '/var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
+    chdir: '{{ images_dir }}'
+    creates: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
 
 - name: Create VM disk image
   command: |
     qemu-img create -f qcow2 \
-      -b /var/lib/libvirt/images/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2 \
-      /var/lib/libvirt/images/{{ vmname }}.qcow2
+      -b {{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2 \
+      {{ images_dir }}/{{ vmname }}.qcow2
   args:
-    creates: '/var/lib/libvirt/images/{{ vmname }}.qcow2'
+    creates: '{{ images_dir }}/{{ vmname }}.qcow2'
 
 - name: Define Ignite FCC
   template:
     src: templates/ignite.yaml.j2
-    dest: /usr/src/{{ vmname }}.fcc
+    dest: '{{ images_dir }}/{{ vmname }}.fcc'
   register: ignite_fcc
 
 - name: Compile ignite file
   shell: |
     podman run -i --rm quay.io/coreos/fcct:release \
-      --pretty --strict < /usr/src/{{ vmname }}.fcc \
-      > /usr/src/{{ vmname }}.ign
+      --pretty --strict < {{ images_dir }}/{{ vmname }}.fcc \
+      > {{ images_dir }}/{{ vmname }}.ign
   when: ignite_fcc.changed
 
 - name: Define Master libvirt VM
@@ -46,6 +55,30 @@
     command: define
     xml: "{{ lookup('template', 'vm.xml.j2') }}"
     autostart: yes
+
+- name: Wait for the qcow2 image to be ready
+  shell: '! lsof {{ images_dir }}/{{ vmname }}.qcow2'
+  register: result
+  until: result.rc == 0
+  changed_when: False
+  retries: 360
+  delay: 2
+
+- name: Allow qemu to access images files
+  file:
+    path: '{{ item }}'
+    mode: '0664'
+    group: qemu
+  with_items:
+    - '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
+    - '{{ images_dir }}/{{ vmname }}.qcow2'
+
+# - name: Allow qemu via selinux to access image files
+#   command: 'chcon -t svirt_home_t {{ item }}'
+#   with_items:
+#     - '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
+#     - '{{ images_dir }}/{{ vmname }}.qcow2'
+#     - '{{ images_dir }}/{{ vmname }}.ign'
 
 - name: Ensure master VM is running
   virt:

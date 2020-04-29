@@ -35,7 +35,7 @@
     <emulator>/usr/bin/qemu-system-x86_64</emulator>
     <disk type="file" device="disk">
       <driver name="qemu" type="qcow2"/>
-      <source file="/var/lib/libvirt/images/{{ vmname }}.qcow2"/>
+      <source file="{{ images_dir }}/{{ vmname }}.qcow2"/>
       <target dev="vda" bus="virtio"/>
       <address type="pci" domain="0x0000" bus="0x04" slot="0x00" function="0x0"/>
     </disk>
@@ -114,6 +114,6 @@
   </devices>
   <qemu:commandline>
     <qemu:arg value="-fw_cfg"/>
-    <qemu:arg value="name=opt/com.coreos/config,file=/usr/src/{{ vmname }}.ign"/>
+    <qemu:arg value="name=opt/com.coreos/config,file={{ images_dir }}/{{ vmname }}.ign"/>
   </qemu:commandline>
 </domain>
