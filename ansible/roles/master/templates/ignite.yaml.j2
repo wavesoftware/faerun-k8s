@@ -5,6 +5,7 @@ passwd:
     - name: core
       ssh_authorized_keys:
         - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC7kJ1iZMTIg95C1+/+DJvlxDhWNR+8TpGcvIoW2p/bSZ9DizDukY6RB6+5EPEekR6YJkAzIyfgXK5AisX4av+SEiPhW+PKY6I4pPAZ6jjnbWOLtTCDAmhdC8qkC+LyTwLDQKsDdJuu/fHdsZts2tCma3zvsrB/rkUruj34qiIYuKqPM5uCCJ68l4PSkrHLjPcGPYL+VbR2egmChEbStr2U8UoRry9BWj0D0Ggxi/qxM6HWylYtHCqgwhPOcTl5k7M7h+YSrbyCn3NG+lJYGhlQrrlgskXm+ruJuF4/mJ5vDMpEOin4K+MvcaT9KohRjCr1KzZVBldSG7AZtb48Xvtb+uFjW8OqQt0IWvTb5w2cPFHvyxLiQ/WFfvTNlTPXy6fkOYMSLQfBYJ9DLXVTn+G4raz+lyZJ1xPKOanD1DiwFdhwWARuFIM3vQpoeYiA/yilUX/lB7qYS2ifrtLFUqWCUtuBIH2UI7Hy2ESawNmijudHSkHEY2e4kE6sI6Qno9vvQUjDT6XLJZfApZYR23Ww2p7NA5ZXyD0cCAbJ3vkHomnXpP9r9H5TXFL3GA5yk/ibrW9bgcBqktoNN8D9t2l8xCo1/3HZd1sWCwHvZf44gtiMzlcszW90hRwWMMgorg6GXZXSi1ESS6OSd7aqxPrqz4qc6e9ZctyU/7+b4EFFdw== ksuszyns@thinkpad-t590
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCwjBmMhN+koXWXx82T938Y6fXw0G4J9EO5bmJNqihBKCXbHPM0OWy/1HmTMxf9jFVedAhfZVrDTt4DdOpt8bj+XI+GLPV+jbQhwkWVPB9n8hk6o5pHlvsG84rKV62ghEXr/nnYQxsf7X0wM4MZ689UmYUykRykcs3tlMZN57Z10hd0HudI4oNrkjYybyf6C5l8GCU5FgZuBy2KOysDGTuFRM4mQqAyaFCWo36xmNpV0pY9Fi1sMz9SqRhFyoWlH6a25tyq0XGvtRm2tpolz5ltyQWxPrSsTlNuj/pC6rofM078Tfcr6CPFD0PU3Oe+5HxQWkdhvcIP2ZNgyFCy3PnyS2TqkDeQFdAPx7BdIpE6uWjsMs8cNnE+kvGqWkSowsa/1RqsDC92RdnqAdmkbgXGvWgCIT1QWfIcat3j1gwtY2090Wc4Kllwfq3cH+NI0tMRUtnvuMcnEZ0WsbCoQRAG6M2DKEskwLGOAhW08c3vVbdV/8ht4rCLVEssQAP4vvf8YLpDcr9q9KrLWmyjz9vTbUIQNNhBtUt8GTwa5Ogs74VKMOT716EfSQB0BvR1WlrI6DzCaKGKu2986mIUKW1RiCF5qfktV6vi1CeLNj7gF9i365Jd5qwVr8j2oZZUneNrkjYlL5XGvUhU3BwHoWkdErwRrASmPjQbPouBIYGXuw== ksuszynski@ksuszynski-gs70
 systemd:
   units:
     - name: etcd-member.service
@@ -215,11 +216,11 @@ storage:
           ETCD_LISTEN_METRICS_URLS=http://0.0.0.0:2381
           ETCD_INITIAL_CLUSTER={{ etcd_initial_cluster }}
           ETCD_STRICT_RECONFIG_CHECK=true
-          # ETCD_TRUSTED_CA_FILE=/etc/ssl/certs/etcd/server-ca.crt
-          # ETCD_CERT_FILE=/etc/ssl/certs/etcd/server.crt
-          # ETCD_KEY_FILE=/etc/ssl/certs/etcd/server.key
-          ETCD_CLIENT_CERT_AUTH=false
-          # ETCD_PEER_TRUSTED_CA_FILE=/etc/ssl/certs/etcd/peer-ca.crt
-          # ETCD_PEER_CERT_FILE=/etc/ssl/certs/etcd/peer.crt
-          # ETCD_PEER_KEY_FILE=/etc/ssl/certs/etcd/peer.key
-          ETCD_PEER_CLIENT_CERT_AUTH=false
+          ETCD_TRUSTED_CA_FILE=/etc/ssl/certs/etcd/server-ca.crt
+          ETCD_CERT_FILE=/etc/ssl/certs/etcd/server.crt
+          ETCD_KEY_FILE=/etc/ssl/certs/etcd/server.key
+          ETCD_CLIENT_CERT_AUTH=true
+          ETCD_PEER_TRUSTED_CA_FILE=/etc/ssl/certs/etcd/peer-ca.crt
+          ETCD_PEER_CERT_FILE=/etc/ssl/certs/etcd/peer.crt
+          ETCD_PEER_KEY_FILE=/etc/ssl/certs/etcd/peer.key
+          ETCD_PEER_CLIENT_CERT_AUTH=true

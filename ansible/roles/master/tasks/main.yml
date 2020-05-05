@@ -8,6 +8,11 @@
     domain_name: '{{ node_name }}.k8s.suszynski.org'
     cluster_dns_service_ip: 10.3.0.10
 
+- name: Gather OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_os_family }}.yml"
+
 - name: Check if Fedora CoreOS Qcow2 image exists
   stat:
     path: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
@@ -79,7 +84,7 @@
   file:
     path: '{{ item }}'
     mode: '0664'
-    group: qemu
+    group: '{{ libvirt_group }}'
   with_items:
     - '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
     - '{{ images_dir }}/{{ vmname }}.qcow2'
