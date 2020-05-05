@@ -13,6 +13,16 @@
   with_first_found:
     - "{{ ansible_os_family }}.yml"
 
+- name: Read Certs and keys
+  set_fact:
+    rootca_crt: "{{ lookup('file', 'root/certs/root.crt') }}"
+    etcd_server_crt: "{{ lookup('file', 'root/certs/' + node_name + '.crt') }}"
+    etcd_server_key: "{{ lookup('file', 'root/keys/' + node_name + '.key') }}"
+    peerca_crt: "{{ lookup('file', 'root/certs/root.crt') }}"
+    etcd_peer_crt: "{{ lookup('file', 'root/certs/' + node_name + '-peer.crt') }}"
+    etcd_peer_key: "{{ lookup('file', 'root/keys/' + node_name + '-peer.key') }}"
+  no_log: yes
+
 - name: Check if Fedora CoreOS Qcow2 image exists
   stat:
     path: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'

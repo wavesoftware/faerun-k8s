@@ -26,7 +26,6 @@ systemd:
         TimeoutStartSec=0
         LimitNOFILE=40000
         ExecStartPre=/bin/mkdir -p /var/lib/etcd
-        ExecStartPre=/bin/mkdir -p /etc/ssl/etcd
         ExecStartPre=-/usr/bin/podman rm etcd
         #--volume $${NOTIFY_SOCKET}:/run/systemd/notify \
         ExecStart=/usr/bin/podman run --name etcd \
@@ -149,7 +148,44 @@ storage:
   directories:
     - path: /etc/kubernetes
     - path: /opt/bootstrap
+    - path: /etc/ssl/etcd/etcd
+      mode: 0500
   files:
+    - path: /etc/kubernetes/ca.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ rootca_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/etcd/server-ca.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ rootca_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/etcd/server.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ etcd_server_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/etcd/server.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ etcd_server_key | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/etcd/peer-ca.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ peerca_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/etcd/peer.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ etcd_peer_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/etcd/peer.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ etcd_peer_key | indent(width=10,indentfirst=False) }}
     - path: /etc/hostname
       mode: 0644
       contents:
