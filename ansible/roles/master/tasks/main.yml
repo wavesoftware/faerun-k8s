@@ -1,8 +1,12 @@
 ---
 
-- name: Set images home fact
+- name: Set vm facts
   set_fact:
     images_dir: /var/lib/libvirt/images
+    vmname: 'k8s-{{ node_name }}'
+    etcd_name: '{{ node_name }}'
+    domain_name: '{{ node_name }}.k8s.suszynski.org'
+    cluster_dns_service_ip: 10.3.0.10
 
 - name: Check if Fedora CoreOS Qcow2 image exists
   stat:
@@ -23,6 +27,18 @@
   args:
     chdir: '{{ images_dir }}'
     creates: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
+
+- name: Ensure master VM is removed
+  virt:
+    name: '{{ vmname }}'
+    state: destroyed
+  when: cleanup | bool
+
+- name: Remove VM disk image
+  file:
+    path: '{{ images_dir }}/{{ vmname }}.qcow2'
+    state: absent
+  when: cleanup | bool
 
 - name: Create VM disk image
   command: |

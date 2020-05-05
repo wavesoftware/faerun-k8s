@@ -1,7 +1,0 @@
----
-- hosts: all
-  vars:
-    vmname: k8s-master-1
-    mac_address: '52:54:00:17:40:01'
-  roles:
-    - master
