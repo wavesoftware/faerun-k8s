@@ -1,7 +1,7 @@
 ---
-fcos_version: 31.20200407.3.0
+fcos_version: 31.20200420.3.0
 fcos_arch: x86_64
-fcos_checksum: sha256:6369ca2c6189bfc60f4ead6cbe379aab5b9b828b8e9794d00e3b74c7ee849f19
+fcos_checksum: sha256:87868b86ff89e755cf8ac9678f9ddfcf6fe22b062ef4635bfc2a37ac81ef7bac
 libvirt_group: qemu
 cleanup: false
 cluster_domain_suffix: k8s.internal
