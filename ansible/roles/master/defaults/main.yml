@@ -5,3 +5,5 @@ fcos_checksum: sha256:87868b86ff89e755cf8ac9678f9ddfcf6fe22b062ef4635bfc2a37ac81
 libvirt_group: qemu
 cleanup: false
 cluster_domain_suffix: k8s.internal
+etcd_version: v3.4.7
+k8s_version: v1.18.2

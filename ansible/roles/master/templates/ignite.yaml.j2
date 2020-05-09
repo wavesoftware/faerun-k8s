@@ -8,7 +8,7 @@ passwd:
         - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCwjBmMhN+koXWXx82T938Y6fXw0G4J9EO5bmJNqihBKCXbHPM0OWy/1HmTMxf9jFVedAhfZVrDTt4DdOpt8bj+XI+GLPV+jbQhwkWVPB9n8hk6o5pHlvsG84rKV62ghEXr/nnYQxsf7X0wM4MZ689UmYUykRykcs3tlMZN57Z10hd0HudI4oNrkjYybyf6C5l8GCU5FgZuBy2KOysDGTuFRM4mQqAyaFCWo36xmNpV0pY9Fi1sMz9SqRhFyoWlH6a25tyq0XGvtRm2tpolz5ltyQWxPrSsTlNuj/pC6rofM078Tfcr6CPFD0PU3Oe+5HxQWkdhvcIP2ZNgyFCy3PnyS2TqkDeQFdAPx7BdIpE6uWjsMs8cNnE+kvGqWkSowsa/1RqsDC92RdnqAdmkbgXGvWgCIT1QWfIcat3j1gwtY2090Wc4Kllwfq3cH+NI0tMRUtnvuMcnEZ0WsbCoQRAG6M2DKEskwLGOAhW08c3vVbdV/8ht4rCLVEssQAP4vvf8YLpDcr9q9KrLWmyjz9vTbUIQNNhBtUt8GTwa5Ogs74VKMOT716EfSQB0BvR1WlrI6DzCaKGKu2986mIUKW1RiCF5qfktV6vi1CeLNj7gF9i365Jd5qwVr8j2oZZUneNrkjYlL5XGvUhU3BwHoWkdErwRrASmPjQbPouBIYGXuw== ksuszynski@ksuszynski-gs70
 systemd:
   units:
-    - name: etcd-member.service
+    - name: etcd.service
       enabled: true
       contents: |
         [Unit]
@@ -33,30 +33,17 @@ systemd:
           --network host \
           --volume /var/lib/etcd:/var/lib/etcd:rw,Z \
           --volume /etc/ssl/etcd:/etc/ssl/certs:ro,Z \
-          quay.io/coreos/etcd:v3.4.7
+          quay.io/coreos/etcd:{{ etcd_version }}
         ExecStop=/usr/bin/podman stop etcd
         [Install]
         WantedBy=multi-user.target
     - name: docker.service
       enabled: true
-    - name: wait-for-dns.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Wait for DNS entries
-        Before=kubelet.service
-        [Service]
-        Type=oneshot
-        RemainAfterExit=true
-        ExecStart=/bin/sh -c 'while ! /usr/bin/grep '^[^#[:space:]]' /etc/resolv.conf > /dev/null; do sleep 1; done'
-        [Install]
-        RequiredBy=kubelet.service
-        RequiredBy=etcd-member.service
     - name: kubelet.service
       contents: |
         [Unit]
         Description=Kubelet (System Container)
-        Wants=etcd-member.service
+        Wants=etcd.service
         [Service]
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
@@ -84,7 +71,7 @@ systemd:
           --volume /opt/cni/bin:/opt/cni/bin:z \
           --volume /etc/iscsi:/etc/iscsi \
           --volume /sbin/iscsiadm:/sbin/iscsiadm \
-          quay.io/poseidon/kubelet:v1.18.2 \
+          quay.io/poseidon/kubelet:{{ k8s_version }} \
           --anonymous-auth=false \
           --authentication-token-webhook \
           --authorization-mode=Webhook \
@@ -115,19 +102,9 @@ systemd:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
-    - name: kubelet.path
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Watch for kubeconfig
-        [Path]
-        PathExists=/etc/kubernetes/kubeconfig
-        [Install]
-        WantedBy=multi-user.target
 storage:
   directories:
     - path: /etc/kubernetes
-    - path: /opt/bootstrap
     - path: /etc/ssl/etcd/etcd
       mode: 0500
   files:
@@ -155,7 +132,7 @@ storage:
       mode: 0644
       contents:
         inline: |
-          {{ peerca_crt | indent(width=10,indentfirst=False) }}
+          {{ etcd_peerca_crt | indent(width=10,indentfirst=False) }}
     - path: /etc/ssl/etcd/etcd/peer.crt
       mode: 0644
       contents:
@@ -171,6 +148,18 @@ storage:
       contents:
         inline:
           {{ domain_name }}
+    - path: /etc/resolv.conf
+      mode: 0644
+      contents:
+        inline: |
+          search k8s.suszynski.org
+          nameserver 192.168.5.1
+    - path: /etc/NetworkManager/conf.d/90-dns-none.conf
+      mode: 0644
+      contents:
+        inline: |
+          [main]
+          dns=none
     - path: /etc/sysctl.d/max-user-watches.conf
       contents:
         inline: |
