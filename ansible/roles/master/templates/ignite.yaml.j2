@@ -27,8 +27,8 @@ systemd:
         LimitNOFILE=40000
         ExecStartPre=/bin/mkdir -p /var/lib/etcd
         ExecStartPre=-/usr/bin/podman rm etcd
-        #--volume $${NOTIFY_SOCKET}:/run/systemd/notify \
         ExecStart=/usr/bin/podman run --name etcd \
+          # --volume ${NOTIFY_SOCKET}:/run/systemd/notify \
           --env-file /etc/etcd/etcd.env \
           --network host \
           --volume /var/lib/etcd:/var/lib/etcd:rw,Z \
