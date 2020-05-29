@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    scheduler.alpha.kubernetes.io/critical-pod: ""
+  labels:
+    component: kube-apiserver
+    tier: control-plane
+  name: kube-apiserver
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - command:
+    - kube-apiserver
+    - --advertise-address={{ domain_name }}
+    - --allow-privileged=true
+    - --apiserver-count=3
+    - --audit-log-maxage=30
+    - --audit-log-maxbackup=3
+    - --audit-log-maxsize=100
+    - --authorization-mode=Node,RBAC
+    - --bind-address=0.0.0.0
+    - --client-ca-file=/etc/ssl/kubernetes/ca.crt
+    - --enable-admission-plugins=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+    - --etcd-cafile=/etc/ssl/kubernetes/ca.crt
+    - --etcd-certfile=/etc/ssl/kubernetes/kubernetes.crt
+    - --etcd-keyfile=/etc/ssl/kubernetes/kubernetes.key
+    - --etcd-servers={{ etcd_servers }}
+    - --event-ttl=1h
+    - --encryption-provider-config=/etc/ssl/kubernetes/encryption-config.yaml
+    - --kubelet-certificate-authority=/etc/ssl/kubernetes/ca.crt
+    - --kubelet-client-certificate=/etc/ssl/kubernetes/kubernetes.crt
+    - --kubelet-client-key=/etc/ssl/kubernetes/kubernetes.key
+    - --kubelet-https=true
+    - --runtime-config=api/all
+    - --service-account-key-file=/etc/ssl/kubernetes/service-account.key
+    - --service-cluster-ip-range=10.32.0.0/24
+    - --service-node-port-range=30000-32767
+    - --tls-cert-file=/etc/ssl/kubernetes/kubernetes.crt
+    - --tls-private-key-file=/etc/ssl/kubernetes/kubernetes.key
+    - --v=2
+    image: gcr.io/google_containers/kube-apiserver:{{ k8s_version }}
+    name: kube-apiserver
+    volumeMounts:
+    - mountPath: /etc/ssl
+      name: k8s-certs
+  volumes:
+  - name: k8s-certs
+    hostPath:
+      path: /etc/ssl

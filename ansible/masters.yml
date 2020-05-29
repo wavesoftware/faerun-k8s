@@ -1,7 +1,9 @@
 ---
 - hosts: all
   vars:
-    etcd_initial_cluster: 'master-1=https://master-1.k8s.suszynski.org:2380,master-2=https://master-2.k8s.suszynski.org:2380'
+    k8s_masters:
+      - master-1
+      - master-2
   roles:
     - { role: master, node_name: master-1, mac_address: '52:54:00:17:40:01' }
     - { role: master, node_name: master-2, mac_address: '52:54:00:17:40:02' }
