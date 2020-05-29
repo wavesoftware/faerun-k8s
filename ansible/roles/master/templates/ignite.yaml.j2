@@ -156,16 +156,16 @@ storage:
       contents:
         inline: |
           {{ kubernetes_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/kubernetes/service-account.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ service_account_crt | indent(width=10,indentfirst=False) }}
     - path: /etc/ssl/kubernetes/kubernetes.key
       mode: 0400
       contents:
         inline: |
           {{ kubernetes_key | indent(width=10,indentfirst=False) }}
-    - path: /etc/ssl/kubernetes/service-account.key
-      mode: 0400
-      contents:
-        inline: |
-          {{ service_account_key | indent(width=10,indentfirst=False) }}
     - path: /etc/kubernetes/manifests/kube-apiserver.yaml
       mode: 0644
       contents:
