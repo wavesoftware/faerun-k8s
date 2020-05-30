@@ -106,6 +106,8 @@ storage:
   directories:
     - path: /etc/kubernetes
     - path: /etc/kubernetes/manifests
+    - path: /etc/kubernetes/configs
+      mode: 0500
     - path: /etc/ssl/etcd
       mode: 0500
     - path: /etc/ssl/kubernetes
@@ -166,11 +168,26 @@ storage:
       contents:
         inline: |
           {{ kubernetes_key | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/kubernetes/service-account.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ service_account_key | indent(width=10,indentfirst=False) }}
     - path: /etc/kubernetes/manifests/kube-apiserver.yaml
       mode: 0644
       contents:
         inline: |
           {{ kube_apiserver_manifest | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+      mode: 0644
+      contents:
+        inline: |
+          {{ kube_controller_manager_manifest | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/configs/kube-controller-manager.kubeconfig
+      mode: 0400
+      contents:
+        inline: |
+          {{ kube_controller_manager_kubeconfig | indent(width=10,indentfirst=False) }}
     - path: /etc/hostname
       mode: 0644
       contents:

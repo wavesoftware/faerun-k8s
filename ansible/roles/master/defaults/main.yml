@@ -8,5 +8,6 @@ cluster_domain_suffix: k8s.internal
 etcd_version: v3.4.9
 k8s_version: v1.18.3
 
+pod_cidr: 10.2.0.0/16
 service_cidr: 10.32.0.0/24
 nodeport_range: 30000-32767

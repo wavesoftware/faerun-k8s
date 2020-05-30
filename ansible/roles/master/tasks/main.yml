@@ -15,6 +15,11 @@
   with_first_found:
     - "{{ ansible_os_family }}.yml"
 
+- name: Read kubeconfigs
+  set_fact:
+    kube_controller_manager_kubeconfig: "{{ lookup('file', 'kubeconfigs/kube-controller-manager.kubeconfig') }}"
+  no_log: yes
+
 - name: Read certs
   set_fact:
     rootca_crt: "{{ lookup('file', 'certs/root/certs/root.crt') }}"
@@ -31,6 +36,7 @@
 - name: Read keys for certificates
   set_fact:
     kubernetes_key: "{{ lookup('file', 'certs/root/keys/kubernetes.key') }}"
+    service_account_key: "{{ lookup('file', 'certs/root/keys/service-account.key') }}"
   no_log: yes
 
 - name: Alias keys for certificates
@@ -82,6 +88,7 @@
 - name: Compile manifests
   set_fact:
     kube_apiserver_manifest: "{{ lookup('template', 'templates/manifests/kube-apiserver.yaml.j2') }}"
+    kube_controller_manager_manifest: "{{ lookup('template', 'templates/manifests/kube-controller-manager.yaml.j2') }}"
 
 - name: Define Ignite FCC
   template:
