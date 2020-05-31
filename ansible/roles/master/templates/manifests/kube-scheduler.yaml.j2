@@ -13,9 +13,6 @@ metadata:
 spec:
   hostNetwork: true
   priorityClassName: system-cluster-critical
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 65534
   containers:
   - name: kube-scheduler
     image: gcr.io/google_containers/kube-scheduler:{{ k8s_version }}

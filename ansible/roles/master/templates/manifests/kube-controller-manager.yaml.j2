@@ -14,9 +14,6 @@ metadata:
 spec:
   hostNetwork: true
   priorityClassName: system-cluster-critical
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 65534
   containers:
   - name: kube-controller-manager
     image: gcr.io/google_containers/kube-controller-manager:{{ k8s_version }}
@@ -60,7 +57,7 @@ spec:
   volumes:
   - name: secrets
     hostPath:
-      path: /etc/ssl/kubernetes
+      path: /etc/kubernetes/secrets
   - name: ssl-host
     hostPath:
       path: /etc/ssl/certs

@@ -36,6 +36,7 @@
 
 - name: Read keys for certificates
   set_fact:
+    rootca_key: "{{ lookup('file', 'certs/root/keys/root.key') }}"
     kubernetes_key: "{{ lookup('file', 'certs/root/keys/kubernetes.key') }}"
     service_account_key: "{{ lookup('file', 'certs/root/keys/service-account.key') }}"
   no_log: yes

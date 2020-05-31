@@ -32,7 +32,7 @@ systemd:
           --env-file /etc/etcd/etcd.env \
           --network host \
           --volume /var/lib/etcd:/var/lib/etcd:rw,Z \
-          --volume /etc/ssl:/etc/ssl:ro,Z \
+          --volume /etc/ssl/etcd:/etc/ssl/etcd:ro,Z \
           quay.io/coreos/etcd:{{ etcd_version }}
         ExecStop=/usr/bin/podman stop etcd
         [Install]
@@ -110,7 +110,7 @@ storage:
       mode: 0500
     - path: /etc/ssl/etcd
       mode: 0500
-    - path: /etc/ssl/kubernetes
+    - path: /etc/kubernetes/secrets
       mode: 0500
   files:
     - path: /etc/kubernetes/ca.crt
@@ -148,27 +148,32 @@ storage:
       contents:
         inline: |
           {{ etcd_peer_key | indent(width=10,indentfirst=False) }}
-    - path: /etc/ssl/kubernetes/ca.crt
+    - path: /etc/kubernetes/secrets/ca.crt
       mode: 0644
       contents:
         inline: |
           {{ rootca_crt | indent(width=10,indentfirst=False) }}
-    - path: /etc/ssl/kubernetes/kubernetes.crt
+    - path: /etc/kubernetes/secrets/kubernetes.crt
       mode: 0644
       contents:
         inline: |
           {{ kubernetes_crt | indent(width=10,indentfirst=False) }}
-    - path: /etc/ssl/kubernetes/service-account.crt
+    - path: /etc/kubernetes/secrets/service-account.crt
       mode: 0644
       contents:
         inline: |
           {{ service_account_crt | indent(width=10,indentfirst=False) }}
-    - path: /etc/ssl/kubernetes/kubernetes.key
+    - path: /etc/kubernetes/secrets/ca.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ rootca_key | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/secrets/kubernetes.key
       mode: 0400
       contents:
         inline: |
           {{ kubernetes_key | indent(width=10,indentfirst=False) }}
-    - path: /etc/ssl/kubernetes/service-account.key
+    - path: /etc/kubernetes/secrets/service-account.key
       mode: 0400
       contents:
         inline: |
@@ -209,6 +214,12 @@ storage:
         inline: |
           search k8s.suszynski.org
           nameserver 192.168.5.1
+    - path: /etc/systemd/system/docker.service.d/mountflags.conf
+      mode: 0644
+      contents:
+        inline: |
+          [Service]
+          MountFlags=private
     - path: /etc/NetworkManager/conf.d/90-dns-none.conf
       mode: 0644
       contents:
