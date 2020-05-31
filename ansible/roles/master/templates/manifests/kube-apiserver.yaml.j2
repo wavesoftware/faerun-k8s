@@ -33,6 +33,7 @@ spec:
     - --etcd-certfile=/etc/kubernetes/secrets/kubernetes.crt
     - --etcd-keyfile=/etc/kubernetes/secrets/kubernetes.key
     - --etcd-servers={{ etcd_servers }}
+    - --cloud-provider=
     - --insecure-port=0
     - --kubelet-client-certificate=/etc/kubernetes/secrets/kubernetes.crt
     - --kubelet-client-key=/etc/kubernetes/secrets/kubernetes.key

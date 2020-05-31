@@ -18,6 +18,7 @@
 - name: Read kubeconfigs
   set_fact:
     kube_controller_manager_kubeconfig: "{{ lookup('file', 'kubeconfigs/kube-controller-manager.kubeconfig') }}"
+    kube_scheduler_kubeconfig: "{{ lookup('file', 'kubeconfigs/kube-scheduler.kubeconfig') }}"
   no_log: yes
 
 - name: Read certs
@@ -89,6 +90,7 @@
   set_fact:
     kube_apiserver_manifest: "{{ lookup('template', 'templates/manifests/kube-apiserver.yaml.j2') }}"
     kube_controller_manager_manifest: "{{ lookup('template', 'templates/manifests/kube-controller-manager.yaml.j2') }}"
+    kube_scheduler_manifest: "{{ lookup('template', 'templates/manifests/kube-scheduler.yaml.j2') }}"
 
 - name: Define Ignite FCC
   template:

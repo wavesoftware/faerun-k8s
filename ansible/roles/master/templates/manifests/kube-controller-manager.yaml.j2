@@ -23,6 +23,7 @@ spec:
     command:
     - kube-controller-manager
     - --allocate-node-cidrs=true
+    - --cloud-provider=
     - --cluster-cidr={{ pod_cidr }}
     - --cluster-signing-cert-file=/etc/kubernetes/secrets/ca.crt
     - --cluster-signing-key-file=/etc/kubernetes/secrets/ca.key
