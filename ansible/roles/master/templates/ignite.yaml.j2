@@ -52,6 +52,7 @@ systemd:
     - name: docker.service
       enabled: true
     - name: kubelet.service
+      enabled: true
       contents: |
         [Unit]
         Description=Kubelet (System Container)
@@ -98,7 +99,7 @@ systemd:
           --exit-on-lock-contention \
           --healthz-port=0 \
           --hostname-override={{ domain_name }} \
-          --kubeconfig=/var/lib/kubelet/kubeconfig \
+          --kubeconfig=/etc/kubernetes/configs/admin.kubeconfig \
           --lock-file=/var/run/lock/kubelet.lock \
           --network-plugin=cni \
           --node-labels=node.kubernetes.io/master \
