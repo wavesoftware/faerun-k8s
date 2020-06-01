@@ -19,6 +19,7 @@
   set_fact:
     kube_controller_manager_kubeconfig: "{{ lookup('file', 'kubeconfigs/kube-controller-manager.kubeconfig') }}"
     kube_scheduler_kubeconfig: "{{ lookup('file', 'kubeconfigs/kube-scheduler.kubeconfig') }}"
+    admin_kubeconfig: "{{ lookup('file', 'kubeconfigs/admin.kubeconfig') }}"
   no_log: yes
 
 - name: Read certs
