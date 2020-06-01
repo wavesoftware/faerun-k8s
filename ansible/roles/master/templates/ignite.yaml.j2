@@ -15,7 +15,7 @@ systemd:
         Description=etcd (System Container)
         Documentation=https://github.com/coreos/etcd
         Wants=network-online.target network.target
-        After=network-online.target
+        After=network-online.target podman-images.service
         [Service]
         # https://github.com/opencontainers/runc/pull/1807
         # Type=notify
@@ -43,6 +43,7 @@ systemd:
         [Unit]
         Description=Wait for ETCD Ready
         Wants=etcd.service
+        After=etcd.service
         [Service]
         Type=oneshot
         RemainAfterExit=true
@@ -56,7 +57,8 @@ systemd:
       contents: |
         [Unit]
         Description=Kubelet (System Container)
-        Wants=etcd.service etcd-ready.service
+        Wants=etcd.service 
+        After=etcd-ready.service docker-images.service podman-images.service
         [Service]
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
@@ -115,6 +117,32 @@ systemd:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
+    - name: docker-images.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Prefetch docker images
+        Wants=docker.service
+        After=docker.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=true
+        ExecStart=/bin/bash /opt/scripts/pull-docker-images.bash
+        [Install]
+        WantedBy=multi-user.target  
+    - name: podman-images.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Prefetch podman images
+        Wants=network-online.target network.target
+        After=network-online.target
+        [Service]
+        Type=oneshot
+        RemainAfterExit=true
+        ExecStart=/bin/bash /opt/scripts/pull-podman-images.bash
+        [Install]
+        WantedBy=multi-user.target    
 storage:
   directories:
     - path: /etc/kubernetes
@@ -278,3 +306,37 @@ storage:
           ETCD_PEER_CERT_FILE=/etc/ssl/etcd/peer.crt
           ETCD_PEER_KEY_FILE=/etc/ssl/etcd/peer.key
           ETCD_PEER_CLIENT_CERT_AUTH=true
+    - path: /opt/scripts/pull-docker-images.bash
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          declare -A pids
+          declare -a images=("apiserver" "controller-manager" "scheduler")
+          # run processes and store pids in array
+          for im in ${images[@]}; do
+            docker pull gcr.io/google_containers/kube-${im}:{{ k8s_version }} &
+            pids[${im}]=$!
+          done
+          # wait for all pids
+          for pid in ${pids[*]}; do
+            wait $pid
+          done
+    - path: /opt/scripts/pull-podman-images.bash
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          declare -A pids
+          declare -a images=("quay.io/coreos/etcd:{{ etcd_version }}" "quay.io/poseidon/kubelet:{{ k8s_version }}")
+          # run processes and store pids in array
+          for im in ${images[@]}; do
+            podman pull ${im} &
+            pids[${im}]=$!
+          done
+          # wait for all pids
+          for pid in ${pids[*]}; do
+            wait $pid
+          done
