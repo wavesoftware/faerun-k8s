@@ -27,6 +27,7 @@ systemd:
         TimeoutStartSec=0
         LimitNOFILE=40000
         ExecStartPre=/bin/mkdir -p /var/lib/etcd
+        ExecStartPre=-/bin/chmod 700 /var/lib/etcd
         ExecStartPre=-/usr/bin/podman rm etcd
         ExecStart=/usr/bin/podman run --name etcd \
           # --volume ${NOTIFY_SOCKET}:/run/systemd/notify \
