@@ -1,0 +1,38 @@
+---
+
+- name: Wait until scheduler is ready
+  command: |
+    kubectl get componentstatus scheduler \
+      -o jsonpath='{.conditions[?(.type=="Healthy")].status}'
+  environment:
+    KUBECONFIG: "{{ playbook_dir }}/../kubeconfigs/admin.kubeconfig"
+  register: res
+  retries: 300
+  delay: 2
+  until: res.stdout == 'True'
+  changed_when: False
+
+- name: Wait until controller-manager is ready
+  command: |
+    kubectl get componentstatus controller-manager \
+      -o jsonpath='{.conditions[?(.type=="Healthy")].status}'
+  environment:
+    KUBECONFIG: "{{ playbook_dir }}/../kubeconfigs/admin.kubeconfig"
+  register: res
+  retries: 300
+  delay: 2
+  until: res.stdout == 'True'
+  changed_when: False
+
+
+- name: Wait until etcd-0 is ready
+  command: |
+    kubectl get componentstatus etcd-0 \
+      -o jsonpath='{.conditions[?(.type=="Healthy")].status}'
+  environment:
+    KUBECONFIG: "{{ playbook_dir }}/../kubeconfigs/admin.kubeconfig"
+  register: res
+  retries: 300
+  delay: 2
+  until: res.stdout == 'True'
+  changed_when: False

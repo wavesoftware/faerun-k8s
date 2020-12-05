@@ -1,8 +1,52 @@
 ---
 
-- name: Set images home fact
+- name: Set facts
   set_fact:
     images_dir: /var/lib/libvirt/images
+    vmname: 'k8s-{{ node_name }}'
+    etcd_name: '{{ node_name }}'
+    domain_name: '{{ node_name }}.k8s.suszynski.org'
+    cluster_dns_service_ip: 10.3.0.10
+    etcd_initial_cluster: "{% for item in k8s_masters %}{{item}}=https://{{item}}.k8s.suszynski.org:2380{{ '' if loop.last else ',' }}{% endfor %}"
+    etcd_servers: "{% for item in k8s_masters %}https://{{item}}.k8s.suszynski.org:2379{{ '' if loop.last else ',' }}{% endfor %}"
+
+- name: Gather OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_os_family }}.yml"
+
+- name: Read kubeconfigs
+  set_fact:
+    kube_controller_manager_kubeconfig: "{{ lookup('file', 'kubeconfigs/kube-controller-manager.kubeconfig') }}"
+    kube_scheduler_kubeconfig: "{{ lookup('file', 'kubeconfigs/kube-scheduler.kubeconfig') }}"
+    admin_kubeconfig: "{{ lookup('file', 'kubeconfigs/admin.kubeconfig') }}"
+  no_log: yes
+
+- name: Read certs
+  set_fact:
+    rootca_crt: "{{ lookup('file', 'certs/root/certs/root.crt') }}"
+    kubernetes_crt: "{{ lookup('file', 'certs/root/certs/kubernetes.crt') }}"
+    service_account_crt: "{{ lookup('file', 'certs/root/certs/service-account.crt') }}"
+
+- name: Alias certs
+  set_fact:
+    etcd_peerca_crt: "{{ rootca_crt }}"
+    etcd_server_crt: "{{ kubernetes_crt }}"
+    etcd_peer_crt: "{{ kubernetes_crt }}"
+  no_log: yes
+
+- name: Read keys for certificates
+  set_fact:
+    rootca_key: "{{ lookup('file', 'certs/root/keys/root.key') }}"
+    kubernetes_key: "{{ lookup('file', 'certs/root/keys/kubernetes.key') }}"
+    service_account_key: "{{ lookup('file', 'certs/root/keys/service-account.key') }}"
+  no_log: yes
+
+- name: Alias keys for certificates
+  set_fact:
+    etcd_server_key: "{{ kubernetes_key }}"
+    etcd_peer_key: "{{ kubernetes_key }}"
+  no_log: yes
 
 - name: Check if Fedora CoreOS Qcow2 image exists
   stat:
@@ -12,7 +56,7 @@
 
 - name: Download Fedora CoreOS Qcow2 image as xz archive
   get_url:
-    url: 'https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ fcos_version }}/{{ fcos_arch }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
+    url: 'https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_stream }}/builds/{{ fcos_version }}/{{ fcos_arch }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
     dest: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
     checksum: '{{ fcos_checksum }}'
   when: not fcos_image.stat.exists
@@ -24,6 +68,18 @@
     chdir: '{{ images_dir }}'
     creates: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
 
+- name: Ensure master VM is removed
+  virt:
+    name: '{{ vmname }}'
+    state: destroyed
+  when: cleanup | bool
+
+- name: Remove VM disk image
+  file:
+    path: '{{ images_dir }}/{{ vmname }}.qcow2'
+    state: absent
+  when: cleanup | bool
+
 - name: Create VM disk image
   command: |
     qemu-img create -f qcow2 \
@@ -31,6 +87,12 @@
       {{ images_dir }}/{{ vmname }}.qcow2
   args:
     creates: '{{ images_dir }}/{{ vmname }}.qcow2'
+
+- name: Compile manifests
+  set_fact:
+    kube_apiserver_manifest: "{{ lookup('template', 'templates/manifests/kube-apiserver.yaml.j2') }}"
+    kube_controller_manager_manifest: "{{ lookup('template', 'templates/manifests/kube-controller-manager.yaml.j2') }}"
+    kube_scheduler_manifest: "{{ lookup('template', 'templates/manifests/kube-scheduler.yaml.j2') }}"
 
 - name: Define Ignite FCC
   template:
@@ -63,7 +125,7 @@
   file:
     path: '{{ item }}'
     mode: '0664'
-    group: qemu
+    group: '{{ libvirt_group }}'
   with_items:
     - '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
     - '{{ images_dir }}/{{ vmname }}.qcow2'

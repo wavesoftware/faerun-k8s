@@ -5,46 +5,340 @@ passwd:
     - name: core
       ssh_authorized_keys:
         - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC7kJ1iZMTIg95C1+/+DJvlxDhWNR+8TpGcvIoW2p/bSZ9DizDukY6RB6+5EPEekR6YJkAzIyfgXK5AisX4av+SEiPhW+PKY6I4pPAZ6jjnbWOLtTCDAmhdC8qkC+LyTwLDQKsDdJuu/fHdsZts2tCma3zvsrB/rkUruj34qiIYuKqPM5uCCJ68l4PSkrHLjPcGPYL+VbR2egmChEbStr2U8UoRry9BWj0D0Ggxi/qxM6HWylYtHCqgwhPOcTl5k7M7h+YSrbyCn3NG+lJYGhlQrrlgskXm+ruJuF4/mJ5vDMpEOin4K+MvcaT9KohRjCr1KzZVBldSG7AZtb48Xvtb+uFjW8OqQt0IWvTb5w2cPFHvyxLiQ/WFfvTNlTPXy6fkOYMSLQfBYJ9DLXVTn+G4raz+lyZJ1xPKOanD1DiwFdhwWARuFIM3vQpoeYiA/yilUX/lB7qYS2ifrtLFUqWCUtuBIH2UI7Hy2ESawNmijudHSkHEY2e4kE6sI6Qno9vvQUjDT6XLJZfApZYR23Ww2p7NA5ZXyD0cCAbJ3vkHomnXpP9r9H5TXFL3GA5yk/ibrW9bgcBqktoNN8D9t2l8xCo1/3HZd1sWCwHvZf44gtiMzlcszW90hRwWMMgorg6GXZXSi1ESS6OSd7aqxPrqz4qc6e9ZctyU/7+b4EFFdw== ksuszyns@thinkpad-t590
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCwjBmMhN+koXWXx82T938Y6fXw0G4J9EO5bmJNqihBKCXbHPM0OWy/1HmTMxf9jFVedAhfZVrDTt4DdOpt8bj+XI+GLPV+jbQhwkWVPB9n8hk6o5pHlvsG84rKV62ghEXr/nnYQxsf7X0wM4MZ689UmYUykRykcs3tlMZN57Z10hd0HudI4oNrkjYybyf6C5l8GCU5FgZuBy2KOysDGTuFRM4mQqAyaFCWo36xmNpV0pY9Fi1sMz9SqRhFyoWlH6a25tyq0XGvtRm2tpolz5ltyQWxPrSsTlNuj/pC6rofM078Tfcr6CPFD0PU3Oe+5HxQWkdhvcIP2ZNgyFCy3PnyS2TqkDeQFdAPx7BdIpE6uWjsMs8cNnE+kvGqWkSowsa/1RqsDC92RdnqAdmkbgXGvWgCIT1QWfIcat3j1gwtY2090Wc4Kllwfq3cH+NI0tMRUtnvuMcnEZ0WsbCoQRAG6M2DKEskwLGOAhW08c3vVbdV/8ht4rCLVEssQAP4vvf8YLpDcr9q9KrLWmyjz9vTbUIQNNhBtUt8GTwa5Ogs74VKMOT716EfSQB0BvR1WlrI6DzCaKGKu2986mIUKW1RiCF5qfktV6vi1CeLNj7gF9i365Jd5qwVr8j2oZZUneNrkjYlL5XGvUhU3BwHoWkdErwRrASmPjQbPouBIYGXuw== ksuszynski@ksuszynski-gs70
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDBicv+7Tj6SN1kd+VuYji+O691rvo9ytPorZBE7QhpNFlYW76xDZkF2HmZNNH9io7pFkWZew1E2L+NcvCD7Rfi7e9dE46yeC04puK1iHEbaaAOJlI4et26K6Dd+Y/LnHwEOQtpZcSzHGKQsPj8MeiPqr4D625qnR/PNurjyhiJNj2vEJIFACo62Rrpp6qFSFvfyBhNr3byhGiJZm/OtU71v9We1cZQjr5/Ugy/pizKL4czo3V4/DOJ4p0H5zhKpNg9eadxupeTbjzd6hd24/jQznlhyvLI6xXWDWQ+e7OAeLPCPm7PYpqwZAe+rHl0Y8adnFi0RJG9boEDVH9lOpNRyrdXpHyfD2ECFr8MrzKYHf5Zq6vePioFlNUaGtzUF1DiiOGnqw1WASzMeXH5bQBSXmT+NVaXPxuMU06CYwFZ5KniCeXqzmEFjei2KL1Hq+KrSMYsVP0bMaOT3OMax2UF00jsRwfEp1sE95jZ+vQC2VVR1yOzkcfTB4OFpRZhrEE= ksuszynski@amn.suszynski.org
+systemd:
+  units:
+    - name: etcd.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=etcd (System Container)
+        Documentation=https://github.com/coreos/etcd
+        Wants=network-online.target network.target
+        After=network-online.target podman-images.service
+        [Service]
+        # https://github.com/opencontainers/runc/pull/1807
+        # Type=notify
+        # NotifyAccess=exec
+        Type=exec
+        Restart=on-failure
+        RestartSec=10s
+        TimeoutStartSec=0
+        LimitNOFILE=40000
+        ExecStartPre=/bin/mkdir -p /var/lib/etcd
+        ExecStartPre=-/bin/chmod 700 /var/lib/etcd
+        ExecStartPre=-/usr/bin/podman rm etcd
+        ExecStart=/usr/bin/podman run --name etcd \
+          # --volume ${NOTIFY_SOCKET}:/run/systemd/notify \
+          --env-file /etc/etcd/etcd.env \
+          --network host \
+          --volume /var/lib/etcd:/var/lib/etcd:rw,Z \
+          --volume /etc/ssl/etcd:/etc/ssl/etcd:ro,Z \
+          quay.io/coreos/etcd:{{ etcd_version }}
+        ExecStop=/usr/bin/podman stop etcd
+        [Install]
+        WantedBy=multi-user.target
+    - name: etcd-ready.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Wait for ETCD Ready
+        Wants=etcd.service
+        After=etcd.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=true
+        ExecStart=/bin/sh -c 'while ! curl --cacert /etc/ssl/etcd/peer-ca.crt --cert /etc/ssl/etcd/peer.crt --key /etc/ssl/etcd/peer.key https://{{ domain_name }}:2379/health; do sleep 1; done'
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker.service
+      enabled: true
+    - name: kubelet.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Kubelet (System Container)
+        Wants=etcd.service 
+        After=etcd-ready.service docker-images.service podman-images.service
+        [Service]
+        ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
+        ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
+        ExecStartPre=/bin/mkdir -p /opt/cni/bin
+        ExecStartPre=/bin/mkdir -p /var/lib/calico
+        ExecStartPre=/bin/mkdir -p /var/lib/kubelet/volumeplugins
+        ExecStartPre=-/usr/bin/podman rm kubelet
+        ExecStart=/usr/bin/podman run --name kubelet \
+          --privileged \
+          --pid host \
+          --network host \
+          --volume /etc/kubernetes:/etc/kubernetes:ro,z \
+          --volume /usr/lib/os-release:/etc/os-release:ro \
+          --volume /etc/ssl/certs:/etc/ssl/certs:ro \
+          --volume /lib/modules:/lib/modules:ro \
+          --volume /run:/run \
+          --volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
+          --volume /sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd \
+          --volume /etc/pki/tls/certs:/usr/share/ca-certificates:ro \
+          --volume /var/lib/calico:/var/lib/calico:ro \
+          --volume /var/lib/docker:/var/lib/docker \
+          --volume /var/lib/kubelet:/var/lib/kubelet:rshared,z \
+          --volume /var/log:/var/log \
+          --volume /var/run/lock:/var/run/lock:z \
+          --volume /opt/cni/bin:/opt/cni/bin:z \
+          --volume /etc/iscsi:/etc/iscsi \
+          --volume /sbin/iscsiadm:/sbin/iscsiadm \
+          quay.io/poseidon/kubelet:{{ k8s_version }} \
+          --anonymous-auth=false \
+          --authentication-token-webhook \
+          --authorization-mode=Webhook \
+          --bootstrap-kubeconfig=/etc/kubernetes/configs/admin.kubeconfig \
+          --cgroup-driver=systemd \
+          --cgroups-per-qos=true \
+          --enforce-node-allocatable=pods \
+          --client-ca-file=/etc/kubernetes/ca.crt \
+          --cluster_dns={{ cluster_dns_service_ip }} \
+          --cluster_domain={{ cluster_domain_suffix }} \
+          --cni-conf-dir=/etc/kubernetes/cni/net.d \
+          --exit-on-lock-contention \
+          --healthz-port=0 \
+          --hostname-override={{ domain_name }} \
+          --kubeconfig=/etc/kubernetes/configs/admin.kubeconfig \
+          --lock-file=/var/run/lock/kubelet.lock \
+          --network-plugin=cni \
+          --node-labels=node.kubernetes.io/master \
+          --node-labels=node.kubernetes.io/controller="true" \
+          --pod-manifest-path=/etc/kubernetes/manifests \
+          --read-only-port=0 \
+          --register-with-taints=node-role.kubernetes.io/master=:NoSchedule \
+          --rotate-certificates \
+          --volume-plugin-dir=/var/lib/kubelet/volumeplugins
+        ExecStop=-/usr/bin/podman stop kubelet
+        Delegate=yes
+        Restart=always
+        RestartSec=10
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker-images.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Prefetch docker images
+        Wants=docker.service
+        After=docker.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=true
+        ExecStart=/bin/bash /opt/scripts/pull-docker-images.bash
+        [Install]
+        WantedBy=multi-user.target  
+    - name: podman-images.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Prefetch podman images
+        Wants=network-online.target network.target
+        After=network-online.target
+        [Service]
+        Type=oneshot
+        RemainAfterExit=true
+        ExecStart=/bin/bash /opt/scripts/pull-podman-images.bash
+        [Install]
+        WantedBy=multi-user.target    
 storage:
+  directories:
+    - path: /etc/kubernetes
+    - path: /etc/kubernetes/manifests
+    - path: /etc/kubernetes/configs
+      mode: 0500
+    - path: /etc/ssl/etcd
+      mode: 0500
+    - path: /etc/kubernetes/secrets
+      mode: 0500
   files:
-    - path: /etc/yum.repos.d/kubernetes.repo
+    - path: /etc/kubernetes/ca.crt
       mode: 0644
       contents:
         inline: |
-          [kubernetes]
-          name=Kubernetes
-          baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-          enabled=1
-          gpgcheck=1
-          repo_gpgcheck=1
-          gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-    - path: /usr/local/sbin/bootstrap.sh
+          {{ rootca_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/server-ca.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ rootca_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/server.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ etcd_server_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/server.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ etcd_server_key | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/peer-ca.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ etcd_peerca_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/peer.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ etcd_peer_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/ssl/etcd/peer.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ etcd_peer_key | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/secrets/ca.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ rootca_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/secrets/kubernetes.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ kubernetes_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/secrets/service-account.crt
+      mode: 0644
+      contents:
+        inline: |
+          {{ service_account_crt | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/secrets/ca.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ rootca_key | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/secrets/kubernetes.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ kubernetes_key | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/secrets/service-account.key
+      mode: 0400
+      contents:
+        inline: |
+          {{ service_account_key | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/manifests/kube-apiserver.yaml
+      mode: 0644
+      contents:
+        inline: |
+          {{ kube_apiserver_manifest | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+      mode: 0644
+      contents:
+        inline: |
+          {{ kube_controller_manager_manifest | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/manifests/kube-scheduler.yaml
+      mode: 0644
+      contents:
+        inline: |
+          {{ kube_scheduler_manifest | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/configs/admin.kubeconfig
+      mode: 0400
+      contents:
+        inline: |
+          {{ admin_kubeconfig | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/configs/kube-controller-manager.kubeconfig
+      mode: 0400
+      contents:
+        inline: |
+          {{ kube_controller_manager_kubeconfig | indent(width=10,indentfirst=False) }}
+    - path: /etc/kubernetes/configs/kube-scheduler.kubeconfig
+      mode: 0400
+      contents:
+        inline: |
+          {{ kube_scheduler_kubeconfig | indent(width=10,indentfirst=False) }}
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline:
+          {{ domain_name }}
+    - path: /etc/resolv.conf
+      mode: 0644
+      contents:
+        inline: |
+          search k8s.suszynski.org
+          nameserver 192.168.5.1
+    - path: /etc/systemd/system/docker.service.d/mountflags.conf
+      mode: 0644
+      contents:
+        inline: |
+          [Service]
+          MountFlags=private
+    - path: /etc/NetworkManager/conf.d/90-dns-none.conf
+      mode: 0644
+      contents:
+        inline: |
+          [main]
+          dns=none
+    - path: /etc/sysctl.d/max-user-watches.conf
+      contents:
+        inline: |
+          fs.inotify.max_user_watches=16184
+    - path: /etc/systemd/system.conf.d/accounting.conf
+      contents:
+        inline: |
+          [Manager]
+          DefaultCPUAccounting=yes
+          DefaultMemoryAccounting=yes
+          DefaultBlockIOAccounting=yes
+    - path: /etc/etcd/etcd.env
+      mode: 0644
+      contents:
+        inline: |
+          # TODO: Use a systemd dropin once podman v1.4.5 is avail.
+          NOTIFY_SOCKET=/run/systemd/notify
+          ETCD_NAME={{ etcd_name }}
+          ETCD_DATA_DIR=/var/lib/etcd
+          ETCD_ADVERTISE_CLIENT_URLS=https://{{ domain_name }}:2379
+          ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ domain_name }}:2380
+          ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:2379
+          ETCD_LISTEN_PEER_URLS=https://0.0.0.0:2380
+          ETCD_LISTEN_METRICS_URLS=http://0.0.0.0:2381
+          ETCD_INITIAL_CLUSTER={{ etcd_initial_cluster }}
+          ETCD_STRICT_RECONFIG_CHECK=true
+          ETCD_TRUSTED_CA_FILE=/etc/ssl/etcd/server-ca.crt
+          ETCD_CERT_FILE=/etc/ssl/etcd/server.crt
+          ETCD_KEY_FILE=/etc/ssl/etcd/server.key
+          ETCD_CLIENT_CERT_AUTH=true
+          ETCD_PEER_TRUSTED_CA_FILE=/etc/ssl/etcd/peer-ca.crt
+          ETCD_PEER_CERT_FILE=/etc/ssl/etcd/peer.crt
+          ETCD_PEER_KEY_FILE=/etc/ssl/etcd/peer.key
+          ETCD_PEER_CLIENT_CERT_AUTH=true
+    - path: /opt/scripts/pull-docker-images.bash
       mode: 0755
       contents:
         inline: |
           #!/usr/bin/env bash
-
           set -Eeuo pipefail
-
-          if ! rpm -q kubeadm kubelet kubectl >/dev/null 2>&1; then
-            rpm-ostree install kubeadm kubelet kubectl
-            systemctl reboot
-          fi
-          if ! systemctl is-enabled kubelet.service; then
-            systemctl enable --now kubelet.service
-          fi
-systemd:
-  units:
-    - name: bootstrap.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Bootstrap Kubernetes node
-        After=network-online.target
-        Wants=network-online.target
-
-        [Service]
-        ExecStart=/usr/local/sbin/bootstrap.sh
-
-        [Install]
-        WantedBy=multi-user.target
+          declare -A pids
+          declare -a images=("apiserver" "controller-manager" "scheduler")
+          # run processes and store pids in array
+          for im in ${images[@]}; do
+            docker pull gcr.io/google_containers/kube-${im}:{{ k8s_version }} &
+            pids[${im}]=$!
+          done
+          # wait for all pids
+          for pid in ${pids[*]}; do
+            wait $pid
+          done
+    - path: /opt/scripts/pull-podman-images.bash
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          declare -A pids
+          declare -a images=("quay.io/coreos/etcd:{{ etcd_version }}" "quay.io/poseidon/kubelet:{{ k8s_version }}")
+          # run processes and store pids in array
+          for im in ${images[@]}; do
+            podman pull ${im} &
+            pids[${im}]=$!
+          done
+          # wait for all pids
+          for pid in ${pids[*]}; do
+            wait $pid
+          done

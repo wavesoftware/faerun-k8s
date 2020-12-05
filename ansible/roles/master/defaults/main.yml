@@ -1,6 +1,14 @@
 ---
-fcos_version: 31.20200407.3.0
+fcos_version: 32.20201104.3.0
+fcos_stream: stable
 fcos_arch: x86_64
-fcos_checksum: sha256:6369ca2c6189bfc60f4ead6cbe379aab5b9b828b8e9794d00e3b74c7ee849f19
-
+fcos_checksum: sha256:ffe6730b3a89bc5d0216a3de52e141891e71b61bfd1c0335b73e00d5833bda46
+libvirt_group: qemu
 cleanup: false
+cluster_domain_suffix: k8s.internal
+etcd_version: v3.4.10
+k8s_version: v1.18.6
+
+pod_cidr: 10.2.0.0/16
+service_cidr: 10.32.0.0/24
+nodeport_range: 30000-32767

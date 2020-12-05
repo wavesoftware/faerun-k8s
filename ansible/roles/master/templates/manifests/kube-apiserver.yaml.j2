@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kube-apiserver
+  namespace: kube-system
+  labels:
+    component: kube-apiserver
+    k8s-app: kube-apiserver
+    tier: control-plane
+  annotations:
+    seccomp.security.alpha.kubernetes.io/pod: docker/default
+    scheduler.alpha.kubernetes.io/critical-pod: ''
+spec:
+  hostNetwork: true
+  priorityClassName: system-cluster-critical
+  containers:
+  - name: kube-apiserver
+    image: gcr.io/google_containers/kube-apiserver:{{ k8s_version }}
+    command:
+    - kube-apiserver
+    - --advertise-address=$(POD_IP)
+    - --allow-privileged=true
+    - --anonymous-auth=false
+    - --authorization-mode=Node,RBAC
+    - --client-ca-file=/etc/kubernetes/secrets/ca.crt
+    - --enable-admission-plugins=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+    - --enable-bootstrap-token-auth=true
+    - --etcd-cafile=/etc/kubernetes/secrets/ca.crt
+    - --etcd-certfile=/etc/kubernetes/secrets/kubernetes.crt
+    - --etcd-keyfile=/etc/kubernetes/secrets/kubernetes.key
+    - --etcd-servers={{ etcd_servers }}
+    - --cloud-provider=
+    - --insecure-port=0
+    - --kubelet-client-certificate=/etc/kubernetes/secrets/kubernetes.crt
+    - --kubelet-client-key=/etc/kubernetes/secrets/kubernetes.key
+    - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+    - --secure-port=6443
+    - --service-account-key-file=/etc/kubernetes/secrets/service-account.crt
+    - --service-cluster-ip-range={{ service_cidr }}
+    - --service-node-port-range={{ nodeport_range }}
+    - --tls-cert-file=/etc/kubernetes/secrets/kubernetes.crt
+    - --tls-private-key-file=/etc/kubernetes/secrets/kubernetes.key
+    env:
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    resources:
+      requests:
+        cpu: 150m
+    volumeMounts:
+    - name: secrets
+      mountPath: /etc/kubernetes/secrets
+      readOnly: true
+    - name: ssl-certs-host
+      mountPath: /etc/ssl/certs
+      readOnly: true
+  volumes:
+  - name: secrets
+    hostPath:
+      path: /etc/kubernetes/secrets
+  - name: ssl-certs-host
+    hostPath:
+      path: /etc/ssl/certs
