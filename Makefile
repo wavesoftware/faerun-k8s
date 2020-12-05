@@ -11,7 +11,7 @@ clean: clean-masters
 
 clean-masters:
 	for vm in $(shell virsh -c qemu:///system list --name | grep k8s); do \
-		virsh -c qemu:///system shutdown $$vm && sleep 1 && \
+		virsh -c qemu:///system destroy $$vm && sleep 1 && \
 		virsh -c qemu:///system undefine $$vm && \
 		rm -fv /var/lib/libvirt/images/$$vm.qcow2 \
 	; done

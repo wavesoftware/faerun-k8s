@@ -56,7 +56,7 @@
 
 - name: Download Fedora CoreOS Qcow2 image as xz archive
   get_url:
-    url: 'https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ fcos_version }}/{{ fcos_arch }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
+    url: 'https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_stream }}/builds/{{ fcos_version }}/{{ fcos_arch }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
     dest: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
     checksum: '{{ fcos_checksum }}'
   when: not fcos_image.stat.exists
