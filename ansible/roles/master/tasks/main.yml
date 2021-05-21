@@ -82,7 +82,7 @@
 
 - name: Create VM disk image
   command: |
-    qemu-img create -f qcow2 \
+    qemu-img create -f qcow2 -F qcow2 \
       -b {{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2 \
       {{ images_dir }}/{{ vmname }}.qcow2
   args:
@@ -107,12 +107,6 @@
       > {{ images_dir }}/{{ vmname }}.ign
   when: ignite_fcc.changed
 
-- name: Define Master libvirt VM
-  virt:
-    command: define
-    xml: "{{ lookup('template', 'vm.xml.j2') }}"
-    autostart: yes
-
 - name: Wait for the qcow2 image to be ready
   shell: '! lsof {{ images_dir }}/{{ vmname }}.qcow2'
   register: result
@@ -121,16 +115,25 @@
   retries: 360
   delay: 2
 
-- name: Allow qemu to access images files
-  file:
-    path: '{{ item }}'
-    mode: '0664'
-    group: '{{ libvirt_group }}'
-  with_items:
-    - '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
-    - '{{ images_dir }}/{{ vmname }}.qcow2'
-
-- name: Ensure master VM is running
-  virt:
-    name: '{{ vmname }}'
-    state: running
+- name: Ensure master VM {{ vmname }} is running
+  environment:
+    LANG: C
+  shell: |
+    if virsh --connect qemu:///system domid --domain {{ vmname }} 2>/dev/null 1>&2; then
+      exit 0
+    fi
+    virt-install \
+      --connect qemu:///system \
+      --name={{ vmname }} \
+      --ram 2048 \
+      --vcpus=2 \
+      --os-variant fedora-coreos-{{ fcos_stream }} \
+      --network network=default,mac={{ mac_address }} \
+      --import \
+      --disk {{ images_dir }}/{{ vmname }}.qcow2 \
+      --qemu-commandline="-fw_cfg name=opt/com.coreos/config,file={{ images_dir }}/{{ vmname }}.ign" \
+      --serial pty \
+      --graphics=none \
+      --noautoconsole
+  register: virt_install
+  changed_when: '"Domain creation completed" in virt_install.stdout'
