@@ -108,7 +108,7 @@ done
   kubectl config set-cluster k8s.suszynski.org \
     --certificate-authority=../certs/root/certs/root.crt \
     --embed-certs=true \
-    --server=https://127.0.0.1:6443 \
+    --server=https://k8s.suszynski.org:6443 \
     --kubeconfig=admin.kubeconfig
 
   kubectl config set-credentials admin \
@@ -123,30 +123,5 @@ done
     --kubeconfig=admin.kubeconfig
 
   kubectl config use-context default --kubeconfig=admin.kubeconfig
-}
-```
-
-## Remote kubeadmin
-
-```bash
-{
-  kubectl config set-cluster k8s.suszynski.org \
-    --certificate-authority=../certs/root/certs/root.crt \
-    --embed-certs=true \
-    --server=https://k8s.suszynski.org:6443 \
-    --kubeconfig=kubeadmin.kubeconfig
-
-  kubectl config set-credentials admin \
-    --client-certificate=../certs/root/certs/admin.crt \
-    --client-key=../certs/root/keys/admin.key \
-    --embed-certs=true \
-    --kubeconfig=kubeadmin.kubeconfig
-
-  kubectl config set-context default \
-    --cluster=k8s.suszynski.org \
-    --user=admin \
-    --kubeconfig=kubeadmin.kubeconfig
-
-  kubectl config use-context default --kubeconfig=kubeadmin.kubeconfig
 }
 ```

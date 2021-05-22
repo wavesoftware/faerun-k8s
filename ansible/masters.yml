@@ -4,9 +4,7 @@
     k8s_masters:
       - master-1
       - master-2
-      - master-3
   roles:
     - { role: master, node_name: master-1, mac_address: '52:54:00:17:40:01' }
     - { role: master, node_name: master-2, mac_address: '52:54:00:17:40:02' }
-    - { role: master, node_name: master-3, mac_address: '52:54:00:17:40:03' }
     - control-plane
