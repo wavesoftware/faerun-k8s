@@ -52,15 +52,25 @@ systemd:
         ExecStart=/bin/sh -c 'while ! curl --cacert /etc/ssl/etcd/peer-ca.crt --cert /etc/ssl/etcd/peer.crt --key /etc/ssl/etcd/peer.key https://{{ domain_name }}:2379/health; do sleep 1; done'
         [Install]
         WantedBy=multi-user.target
-    - name: docker.service
+    - name: podman.socket
       enabled: true
+      dropins:
+        - name: docker-group.conf
+          contents: |
+            [Socket]
+            SocketMode=0660
+            SocketGroup=docker
+    - name: docker.socket
+      enabled: false
+    - name: docker.service
+      enabled: false
     - name: kubelet.service
       enabled: true
       contents: |
         [Unit]
         Description=Kubelet (System Container)
         Wants=etcd.service 
-        After=etcd-ready.service docker-images.service podman-images.service
+        After=etcd-ready.service podman-images.service
         [Service]
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
@@ -81,7 +91,6 @@ systemd:
           --volume /sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd \
           --volume /etc/pki/tls/certs:/usr/share/ca-certificates:ro \
           --volume /var/lib/calico:/var/lib/calico:ro \
-          --volume /var/lib/docker:/var/lib/docker \
           --volume /var/lib/kubelet:/var/lib/kubelet:rshared,z \
           --volume /var/log:/var/log \
           --volume /var/run/lock:/var/run/lock:z \
@@ -89,12 +98,13 @@ systemd:
           --volume /etc/iscsi:/etc/iscsi \
           --volume /sbin/iscsiadm:/sbin/iscsiadm \
           quay.io/poseidon/kubelet:{{ k8s_version }} \
+          --container-runtime=docker \
+          --container-runtime-endpoint=unix:///run/podman/podman.sock \
+          --cgroup-driver=systemd \
           --anonymous-auth=false \
           --authentication-token-webhook \
           --authorization-mode=Webhook \
           --bootstrap-kubeconfig=/etc/kubernetes/configs/admin.kubeconfig \
-          --cgroup-driver=systemd \
-          --cgroups-per-qos=true \
           --enforce-node-allocatable=pods \
           --client-ca-file=/etc/kubernetes/ca.crt \
           --cluster_dns={{ cluster_dns_service_ip }} \
@@ -118,20 +128,7 @@ systemd:
         Restart=always
         RestartSec=10
         [Install]
-        WantedBy=multi-user.target
-    - name: docker-images.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Prefetch docker images
-        Wants=docker.service
-        After=docker.service
-        [Service]
-        Type=oneshot
-        RemainAfterExit=true
-        ExecStart=/bin/bash /opt/scripts/pull-docker-images.bash
-        [Install]
-        WantedBy=multi-user.target  
+        WantedBy=multi-user.target 
     - name: podman-images.service
       enabled: true
       contents: |
@@ -262,12 +259,6 @@ storage:
         inline: |
           search k8s.suszynski.org
           nameserver 192.168.5.1
-    - path: /etc/systemd/system/docker.service.d/mountflags.conf
-      mode: 0644
-      contents:
-        inline: |
-          [Service]
-          MountFlags=private
     - path: /etc/NetworkManager/conf.d/90-dns-none.conf
       mode: 0644
       contents:
@@ -285,6 +276,17 @@ storage:
           DefaultCPUAccounting=yes
           DefaultMemoryAccounting=yes
           DefaultBlockIOAccounting=yes
+    - path: /etc/modules-load.d/crio.conf
+      contents:
+        inline: |
+          overlay
+          br_netfilter
+    - path: /etc/sysctl.d/99-kubernetes-cri.conf
+      contents:
+        inline: |
+          net.bridge.bridge-nf-call-iptables  = 1
+          net.ipv4.ip_forward                 = 1
+          net.bridge.bridge-nf-call-ip6tables = 1
     - path: /etc/etcd/etcd.env
       mode: 0644
       contents:
@@ -308,23 +310,6 @@ storage:
           ETCD_PEER_CERT_FILE=/etc/ssl/etcd/peer.crt
           ETCD_PEER_KEY_FILE=/etc/ssl/etcd/peer.key
           ETCD_PEER_CLIENT_CERT_AUTH=true
-    - path: /opt/scripts/pull-docker-images.bash
-      mode: 0755
-      contents:
-        inline: |
-          #!/usr/bin/env bash
-          set -Eeuo pipefail
-          declare -A pids
-          declare -a images=("apiserver" "controller-manager" "scheduler")
-          # run processes and store pids in array
-          for im in ${images[@]}; do
-            docker pull gcr.io/google_containers/kube-${im}:{{ k8s_version }} &
-            pids[${im}]=$!
-          done
-          # wait for all pids
-          for pid in ${pids[*]}; do
-            wait $pid
-          done
     - path: /opt/scripts/pull-podman-images.bash
       mode: 0755
       contents:
@@ -332,7 +317,13 @@ storage:
           #!/usr/bin/env bash
           set -Eeuo pipefail
           declare -A pids
-          declare -a images=("quay.io/coreos/etcd:{{ etcd_version }}" "quay.io/poseidon/kubelet:{{ k8s_version }}")
+          declare -a images=(
+            "quay.io/coreos/etcd:{{ etcd_version }}"
+            "quay.io/poseidon/kubelet:{{ k8s_version }}"
+            "k8s.gcr.io/kube-apiserver:{{ k8s_version }}"
+            "k8s.gcr.io/kube-controller-manager:{{ k8s_version }}"
+            "k8s.gcr.io/kube-scheduler:{{ k8s_version }}"
+          )
           # run processes and store pids in array
           for im in ${images[@]}; do
             podman pull ${im} &
