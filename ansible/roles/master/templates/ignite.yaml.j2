@@ -1,5 +1,5 @@
 variant: fcos
-version: 1.0.0
+version: 1.3.0
 passwd:
   users:
     - name: core
@@ -78,7 +78,6 @@ systemd:
           --volume /lib/modules:/lib/modules:ro \
           --volume /run:/run \
           --volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
-          --volume /sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd \
           --volume /etc/pki/tls/certs:/usr/share/ca-certificates:ro \
           --volume /var/lib/calico:/var/lib/calico:ro \
           --volume /var/lib/docker:/var/lib/docker \
@@ -318,7 +317,7 @@ storage:
           declare -a images=("apiserver" "controller-manager" "scheduler")
           # run processes and store pids in array
           for im in ${images[@]}; do
-            docker pull gcr.io/google_containers/kube-${im}:{{ k8s_version }} &
+            docker pull k8s.gcr.io/kube-${im}:{{ k8s_version }} &
             pids[${im}]=$!
           done
           # wait for all pids
