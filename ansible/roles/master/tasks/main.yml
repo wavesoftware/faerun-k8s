@@ -56,20 +56,13 @@
 
 - name: Define control-plane FCC
   template:
-    src: templates/ignite.yaml.j2
-    dest: '{{ images_dir }}/{{ vmname }}/master.fcc'
+    src: templates/controller.yaml.j2
+    dest: '{{ images_dir }}/{{ vmname }}/controller.fcc'
 
 - name: Networking
   import_role:
     name: network
-  vars:
-    vmname: '{{ vmname }}'
-    images_dir: '{{ images_dir }}'
 
 - name: Virtual Machine
   import_role:
     name: vm
-  vars:
-    vmname: '{{ vmname }}'
-    images_dir: '{{ images_dir }}'
-    mac_address: '{{ mac_address }}'

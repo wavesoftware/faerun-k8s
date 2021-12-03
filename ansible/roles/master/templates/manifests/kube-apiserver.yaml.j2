@@ -16,7 +16,7 @@ spec:
   priorityClassName: system-cluster-critical
   containers:
   - name: kube-apiserver
-    image: gcr.io/google_containers/kube-apiserver:{{ k8s_version }}
+    image: k8s.gcr.io/kube-apiserver:{{ k8s_version }}
     command:
     - kube-apiserver
     - --advertise-address=$(POD_IP)

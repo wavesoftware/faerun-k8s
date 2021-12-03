@@ -1,6 +1,20 @@
 ---
 
+- name: Compile network manifests
+  set_fact:
+    kube_proxy_manifest: "{{ lookup('template', 'templates/manifests/kube-proxy.yaml.j2') }}"
+
+- name: Make sure manifest dir exists
+  file:
+    path: '{{ images_dir }}/{{ vmname }}/manifests'
+    state: directory
+
+- name: Compile kube-proxy manifest
+  template:
+    src: templates/manifests/kube-proxy.yaml.j2
+    dest: '{{ images_dir }}/{{ vmname }}/manifests/kube-proxy.yaml'
+
 - name: Define Ignite FCC
   template:
-    src: templates/ignite.yaml.j2
+    src: templates/network.yaml.j2
     dest: '{{ images_dir }}/{{ vmname }}/network.fcc'

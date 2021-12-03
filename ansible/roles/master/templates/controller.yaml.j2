@@ -1,5 +1,5 @@
 variant: fcos
-version: 1.0.0
+version: 1.2.0
 passwd:
   users:
     - name: core
@@ -278,6 +278,18 @@ storage:
       contents:
         inline: |
           fs.inotify.max_user_watches=16184
+    - path: /etc/sysctl.d/reverse-path-filter.conf
+      contents:
+        inline: |
+          net.ipv4.conf.default.rp_filter=0
+          net.ipv4.conf.*.rp_filter=0
+    - path: /etc/systemd/network/50-flannel.link
+      contents:
+        inline: |
+          [Match]
+          OriginalName=flannel*
+          [Link]
+          MACAddressPolicy=none
     - path: /etc/systemd/system.conf.d/accounting.conf
       contents:
         inline: |
@@ -315,10 +327,10 @@ storage:
           #!/usr/bin/env bash
           set -Eeuo pipefail
           declare -A pids
-          declare -a images=("apiserver" "controller-manager" "scheduler")
+          declare -a images=("apiserver" "controller-manager" "scheduler" "proxy")
           # run processes and store pids in array
           for im in ${images[@]}; do
-            docker pull gcr.io/google_containers/kube-${im}:{{ k8s_version }} &
+            docker pull k8s.gcr.io/kube-${im}:{{ k8s_version }} &
             pids[${im}]=$!
           done
           # wait for all pids

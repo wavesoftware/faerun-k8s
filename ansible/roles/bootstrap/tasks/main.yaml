@@ -1,0 +1,7 @@
+---
+
+- name: Apply manifests for {{ node_name }}
+  command: |
+    kubectl apply -f {{ images_dir }}/{{ vmname }}/manifests
+  environment:
+    KUBECONFIG: "{{ playbook_dir }}/../kubeconfigs/admin.kubeconfig"

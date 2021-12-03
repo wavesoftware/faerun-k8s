@@ -15,7 +15,7 @@ spec:
   priorityClassName: system-cluster-critical
   containers:
   - name: kube-scheduler
-    image: gcr.io/google_containers/kube-scheduler:{{ k8s_version }}
+    image: k8s.gcr.io/kube-scheduler:{{ k8s_version }}
     command:
     - kube-scheduler
     - --kubeconfig=/etc/kubernetes/configs/kube-scheduler.kubeconfig
