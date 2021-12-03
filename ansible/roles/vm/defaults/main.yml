@@ -1,0 +1,9 @@
+---
+fcos_version: 34.20210427.3.0
+fcos_stream: stable
+fcos_arch: x86_64
+fcos_checksum: sha256:9cb480f4f4d43da7fe6cf5b1c37328d8657d92564d5460a51fbe3a5eab049ad6
+libvirt_group: qemu
+
+vcpus: 2
+ram: 2048

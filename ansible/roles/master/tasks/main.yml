@@ -10,11 +10,6 @@
     etcd_initial_cluster: "{% for item in k8s_masters %}{{item}}=https://{{item}}.k8s.suszynski.org:2380{{ '' if loop.last else ',' }}{% endfor %}"
     etcd_servers: "{% for item in k8s_masters %}https://{{item}}.k8s.suszynski.org:2379{{ '' if loop.last else ',' }}{% endfor %}"
 
-- name: Gather OS specific variables
-  include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ ansible_os_family }}.yml"
-
 - name: Read kubeconfigs
   set_fact:
     kube_controller_manager_kubeconfig: "{{ lookup('file', 'kubeconfigs/kube-controller-manager.kubeconfig') }}"
@@ -48,92 +43,33 @@
     etcd_peer_key: "{{ kubernetes_key }}"
   no_log: yes
 
-- name: Check if Fedora CoreOS Qcow2 image exists
-  stat:
-    path: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
-  register: fcos_image
-  changed_when: False
-
-- name: Download Fedora CoreOS Qcow2 image as xz archive
-  get_url:
-    url: 'https://builds.coreos.fedoraproject.org/prod/streams/{{ fcos_stream }}/builds/{{ fcos_version }}/{{ fcos_arch }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
-    dest: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz'
-    checksum: '{{ fcos_checksum }}'
-  when: not fcos_image.stat.exists
-
-- name: Extract XZ archive of Fedora CoreOS Qcow2 image
-  command: |
-    unxz fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2.xz
-  args:
-    chdir: '{{ images_dir }}'
-    creates: '{{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2'
-
-- name: Ensure master VM is removed
-  virt:
-    name: '{{ vmname }}'
-    state: destroyed
-  when: cleanup | bool
-
-- name: Remove VM disk image
-  file:
-    path: '{{ images_dir }}/{{ vmname }}.qcow2'
-    state: absent
-  when: cleanup | bool
-
-- name: Create VM disk image
-  command: |
-    qemu-img create -f qcow2 -F qcow2 \
-      -b {{ images_dir }}/fedora-coreos-{{ fcos_version }}-qemu.{{ fcos_arch }}.qcow2 \
-      {{ images_dir }}/{{ vmname }}.qcow2
-  args:
-    creates: '{{ images_dir }}/{{ vmname }}.qcow2'
-
-- name: Compile manifests
+- name: Compile control-plane manifests
   set_fact:
     kube_apiserver_manifest: "{{ lookup('template', 'templates/manifests/kube-apiserver.yaml.j2') }}"
     kube_controller_manager_manifest: "{{ lookup('template', 'templates/manifests/kube-controller-manager.yaml.j2') }}"
     kube_scheduler_manifest: "{{ lookup('template', 'templates/manifests/kube-scheduler.yaml.j2') }}"
 
-- name: Define Ignite FCC
+- name: Create machine FCC directory
+  file:
+    path: '{{ images_dir }}/{{ vmname }}'
+    state: directory
+
+- name: Define control-plane FCC
   template:
     src: templates/ignite.yaml.j2
-    dest: '{{ images_dir }}/{{ vmname }}.fcc'
-  register: ignite_fcc
+    dest: '{{ images_dir }}/{{ vmname }}/master.fcc'
 
-- name: Compile ignite file
-  shell: |
-    podman run -i --rm quay.io/coreos/fcct:release \
-      --pretty --strict < {{ images_dir }}/{{ vmname }}.fcc \
-      > {{ images_dir }}/{{ vmname }}.ign
-  when: ignite_fcc.changed
+- name: Networking
+  import_role:
+    name: network
+  vars:
+    vmname: '{{ vmname }}'
+    images_dir: '{{ images_dir }}'
 
-- name: Wait for the qcow2 image to be ready
-  shell: '! lsof {{ images_dir }}/{{ vmname }}.qcow2'
-  register: result
-  until: result.rc == 0
-  changed_when: False
-  retries: 360
-  delay: 2
-
-- name: Ensure master VM {{ vmname }} is running
-  environment:
-    LANG: C
-  shell: |
-    if virsh --connect qemu:///system domid --domain {{ vmname }} 2>/dev/null 1>&2; then
-      exit 0
-    fi
-    virt-install \
-      --connect qemu:///system \
-      --name={{ vmname }} \
-      --ram 2048 \
-      --vcpus=2 \
-      --os-variant fedora-coreos-{{ fcos_stream }} \
-      --network network=default,mac={{ mac_address }} \
-      --import \
-      --disk {{ images_dir }}/{{ vmname }}.qcow2 \
-      --qemu-commandline="-fw_cfg name=opt/com.coreos/config,file={{ images_dir }}/{{ vmname }}.ign" \
-      --serial pty \
-      --graphics=none \
-      --noautoconsole
-  register: virt_install
-  changed_when: '"Domain creation completed" in virt_install.stdout'
+- name: Virtual Machine
+  import_role:
+    name: vm
+  vars:
+    vmname: '{{ vmname }}'
+    images_dir: '{{ images_dir }}'
+    mac_address: '{{ mac_address }}'

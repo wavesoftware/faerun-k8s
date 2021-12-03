@@ -1,1 +1,6 @@
 ---
+
+- name: Define Ignite FCC
+  template:
+    src: templates/ignite.yaml.j2
+    dest: '{{ images_dir }}/{{ vmname }}/network.fcc'
