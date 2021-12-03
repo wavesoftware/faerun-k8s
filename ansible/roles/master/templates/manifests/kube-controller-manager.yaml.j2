@@ -16,7 +16,7 @@ spec:
   priorityClassName: system-cluster-critical
   containers:
   - name: kube-controller-manager
-    image: gcr.io/google_containers/kube-controller-manager:{{ k8s_version }}
+    image: k8s.gcr.io/kube-controller-manager:{{ k8s_version }}
     command:
     - kube-controller-manager
     - --allocate-node-cidrs=true

@@ -1,13 +1,13 @@
 ---
-fcos_version: 34.20210427.3.0
+fcos_version: 34.20210904.3.0
 fcos_stream: stable
 fcos_arch: x86_64
-fcos_checksum: sha256:9cb480f4f4d43da7fe6cf5b1c37328d8657d92564d5460a51fbe3a5eab049ad6
+fcos_checksum: sha256:58e9e841a42944c616925deaa11849881c9cfc47e7d2116bc3c2c9985fea632a
 libvirt_group: qemu
 cleanup: false
 cluster_domain_suffix: k8s.internal
-etcd_version: v3.4.10
-k8s_version: v1.18.6
+etcd_version: v3.5.0
+k8s_version: v1.22.2
 
 pod_cidr: 10.2.0.0/16
 service_cidr: 10.32.0.0/24

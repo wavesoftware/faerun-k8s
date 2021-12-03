@@ -94,18 +94,18 @@
     kube_controller_manager_manifest: "{{ lookup('template', 'templates/manifests/kube-controller-manager.yaml.j2') }}"
     kube_scheduler_manifest: "{{ lookup('template', 'templates/manifests/kube-scheduler.yaml.j2') }}"
 
-- name: Define Ignite FCC
+- name: Define Ignite Butane
   template:
     src: templates/ignite.yaml.j2
-    dest: '{{ images_dir }}/{{ vmname }}.fcc'
-  register: ignite_fcc
+    dest: '{{ images_dir }}/{{ vmname }}.bu'
+  register: ignite_bu
 
 - name: Compile ignite file
   shell: |
-    podman run -i --rm quay.io/coreos/fcct:release \
-      --pretty --strict < {{ images_dir }}/{{ vmname }}.fcc \
+    podman run -i --rm quay.io/coreos/butane:release \
+      --pretty --strict < {{ images_dir }}/{{ vmname }}.bu \
       > {{ images_dir }}/{{ vmname }}.ign
-  when: ignite_fcc.changed
+  when: ignite_bu.changed
 
 - name: Wait for the qcow2 image to be ready
   shell: '! lsof {{ images_dir }}/{{ vmname }}.qcow2'
