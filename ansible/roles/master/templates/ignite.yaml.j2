@@ -160,97 +160,97 @@ storage:
       mode: 0644
       contents:
         inline: |
-          {{ rootca_crt | indent(width=10,indentfirst=False) }}
+          {{ rootca_crt | indent(width=10,first=False) }}
     - path: /etc/ssl/etcd/server-ca.crt
       mode: 0644
       contents:
         inline: |
-          {{ rootca_crt | indent(width=10,indentfirst=False) }}
+          {{ rootca_crt | indent(width=10,first=False) }}
     - path: /etc/ssl/etcd/server.crt
       mode: 0644
       contents:
         inline: |
-          {{ etcd_server_crt | indent(width=10,indentfirst=False) }}
+          {{ etcd_server_crt | indent(width=10,first=False) }}
     - path: /etc/ssl/etcd/server.key
       mode: 0400
       contents:
         inline: |
-          {{ etcd_server_key | indent(width=10,indentfirst=False) }}
+          {{ etcd_server_key | indent(width=10,first=False) }}
     - path: /etc/ssl/etcd/peer-ca.crt
       mode: 0644
       contents:
         inline: |
-          {{ etcd_peerca_crt | indent(width=10,indentfirst=False) }}
+          {{ etcd_peerca_crt | indent(width=10,first=False) }}
     - path: /etc/ssl/etcd/peer.crt
       mode: 0644
       contents:
         inline: |
-          {{ etcd_peer_crt | indent(width=10,indentfirst=False) }}
+          {{ etcd_peer_crt | indent(width=10,first=False) }}
     - path: /etc/ssl/etcd/peer.key
       mode: 0400
       contents:
         inline: |
-          {{ etcd_peer_key | indent(width=10,indentfirst=False) }}
+          {{ etcd_peer_key | indent(width=10,first=False) }}
     - path: /etc/kubernetes/secrets/ca.crt
       mode: 0644
       contents:
         inline: |
-          {{ rootca_crt | indent(width=10,indentfirst=False) }}
+          {{ rootca_crt | indent(width=10,first=False) }}
     - path: /etc/kubernetes/secrets/kubernetes.crt
       mode: 0644
       contents:
         inline: |
-          {{ kubernetes_crt | indent(width=10,indentfirst=False) }}
+          {{ kubernetes_crt | indent(width=10,first=False) }}
     - path: /etc/kubernetes/secrets/service-account.crt
       mode: 0644
       contents:
         inline: |
-          {{ service_account_crt | indent(width=10,indentfirst=False) }}
+          {{ service_account_crt | indent(width=10,first=False) }}
     - path: /etc/kubernetes/secrets/ca.key
       mode: 0400
       contents:
         inline: |
-          {{ rootca_key | indent(width=10,indentfirst=False) }}
+          {{ rootca_key | indent(width=10,first=False) }}
     - path: /etc/kubernetes/secrets/kubernetes.key
       mode: 0400
       contents:
         inline: |
-          {{ kubernetes_key | indent(width=10,indentfirst=False) }}
+          {{ kubernetes_key | indent(width=10,first=False) }}
     - path: /etc/kubernetes/secrets/service-account.key
       mode: 0400
       contents:
         inline: |
-          {{ service_account_key | indent(width=10,indentfirst=False) }}
+          {{ service_account_key | indent(width=10,first=False) }}
     - path: /etc/kubernetes/manifests/kube-apiserver.yaml
       mode: 0644
       contents:
         inline: |
-          {{ kube_apiserver_manifest | indent(width=10,indentfirst=False) }}
+          {{ kube_apiserver_manifest | indent(width=10,first=False) }}
     - path: /etc/kubernetes/manifests/kube-controller-manager.yaml
       mode: 0644
       contents:
         inline: |
-          {{ kube_controller_manager_manifest | indent(width=10,indentfirst=False) }}
+          {{ kube_controller_manager_manifest | indent(width=10,first=False) }}
     - path: /etc/kubernetes/manifests/kube-scheduler.yaml
       mode: 0644
       contents:
         inline: |
-          {{ kube_scheduler_manifest | indent(width=10,indentfirst=False) }}
+          {{ kube_scheduler_manifest | indent(width=10,first=False) }}
     - path: /etc/kubernetes/configs/admin.kubeconfig
       mode: 0400
       contents:
         inline: |
-          {{ admin_kubeconfig | indent(width=10,indentfirst=False) }}
+          {{ admin_kubeconfig | indent(width=10,first=False) }}
     - path: /etc/kubernetes/configs/kube-controller-manager.kubeconfig
       mode: 0400
       contents:
         inline: |
-          {{ kube_controller_manager_kubeconfig | indent(width=10,indentfirst=False) }}
+          {{ kube_controller_manager_kubeconfig | indent(width=10,first=False) }}
     - path: /etc/kubernetes/configs/kube-scheduler.kubeconfig
       mode: 0400
       contents:
         inline: |
-          {{ kube_scheduler_kubeconfig | indent(width=10,indentfirst=False) }}
+          {{ kube_scheduler_kubeconfig | indent(width=10,first=False) }}
     - path: /etc/hostname
       mode: 0644
       contents:
